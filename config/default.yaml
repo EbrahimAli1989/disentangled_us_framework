@@ -1,0 +1,82 @@
+# Default configuration for the Disentangled US Tumor Classification Framework
+
+data:
+  data_dir: "C:/Users/amata/OneDrive - Algonquin College/Documents/Ebrahim/Spike_net_algorthim/datasets"             # directory containing images.npy, masks.npy, labels.npy
+  image_size: 224
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  num_workers: 4
+  pin_memory: true
+
+model:
+  model_type: "disentangled"       # choices: disentangled | baseline
+  encoder_type: "resnet18"         # choices: resnet18 | vit | debface
+  shared_encoder: false            # true = all branches share weights
+  feature_dim: 512
+  projection_dim: 256
+  classifier_hidden_dims: [256, 128]
+  classifier_dropout: 0.3
+  classifier_batchnorm: true
+  num_classes: 2
+  pretrained: true                 # use ImageNet pretrained weights for resnet18/vit
+  inpainting_enabled: false        # true = add learnable U-Net inpainting in bg branch
+  inpainting_channels: 32          # U-Net base channel multiplier
+
+loss:
+  lambda_sim: 1.0                  # weight for similarity loss
+  lambda_dis: 0.5                  # weight for disentanglement loss
+  lambda_orth: 0.1                 # weight for orthogonality loss
+  lambda_adv: 0.1                  # weight for adversarial disentanglement loss
+  sim_loss_type: "ntxent"          # choices: cosine | ntxent | contrastive
+  dis_loss_type: "kl+orth"         # choices: kl | orth | kl+orth
+  ntxent_temperature: 0.07
+
+training:
+  epochs: 100
+  batch_size: 32
+  optimizer: "adamw"               # choices: adam | adamw | sgd
+  lr: 1e-4
+  weight_decay: 1e-4
+  scheduler: "cosine"              # choices: step | cosine | plateau | none
+  scheduler_T_max: 100
+  warmup_epochs: 5
+  mixed_precision: true
+  gradient_clip: 1.0
+  early_stopping_patience: 20
+  checkpoint_dir: "outputs/checkpoints"
+  log_dir: "outputs/logs"
+
+experiment:
+  num_runs: 10
+  base_seed: 42
+  results_dir: "outputs/results"
+  figures_dir: "outputs/figures"
+  use_wandb: false
+  wandb_project: "disentangled-us-classification"
+  use_tensorboard: true
+
+augmentation:
+  train:
+    horizontal_flip: true
+    vertical_flip: true
+    rotation_degrees: 15
+    random_crop: true
+    crop_scale: [0.8, 1.0]
+    elastic_deform: true
+    elastic_alpha: 34
+    elastic_sigma: 4
+    gaussian_noise_std: 0.02
+    clahe: true
+    brightness_jitter: 0.2
+    contrast_jitter: 0.2
+    blur_prob: 0.3
+    blur_kernel: [3, 7]
+    affine: true
+  val:
+    normalize_only: true
+
+gradcam:
+  enabled: true
+  num_samples: 20
+  output_dir: "outputs/figures/gradcam"
